@@ -6,7 +6,6 @@ import { ActivityTimeline } from "@/components/workflow/ActivityTimeline";
 import { AiOutputCard } from "@/components/workflow/AiOutputCard";
 import { TaskCard } from "@/components/workflow/TaskCard";
 import {
-  ActionButton,
   AiDisclaimer,
   PageHeader,
   Panel,
@@ -91,7 +90,7 @@ function Dashboard() {
 
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
-            <Panel label="Quick actions" className="wf-rise" >
+            <Panel label="Quick actions" className="wf-rise">
               <div className="grid gap-3 sm:grid-cols-3">
                 <Link
                   to="/email-assistant"
