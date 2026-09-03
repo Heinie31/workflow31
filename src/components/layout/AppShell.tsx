@@ -33,7 +33,7 @@ const systemNav: NavItem[] = [
   { to: "/settings", label: "Settings", short: "Settings", icon: SettingsIcon },
 ];
 
-function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
+function NavLink({ item, onNavigate }: { item: NavItem; onNavigate?: (() => void) | undefined }) {
   const Icon = item.icon;
   return (
     <Link
@@ -69,7 +69,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
   );
 }
 
-function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarBody({ onNavigate }: { onNavigate?: (() => void) | undefined }) {
   return (
     <>
       <div className="mt-2 space-y-5 px-3">

@@ -83,7 +83,7 @@ function Dashboard() {
           <StatCard
             label="Today's meetings"
             value={dashboardStats.meetingsToday}
-            hint={`Next ${formatTime(meetings[0].startsAt)}`}
+            hint={meetings[0] ? `Next ${formatTime(meetings[0].startsAt)}` : "None scheduled"}
             delay={190}
           />
         </div>
