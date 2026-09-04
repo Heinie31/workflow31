@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Plus, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { TaskCard } from "@/components/workflow/TaskCard";
@@ -8,6 +10,7 @@ import {
   ActionButton,
   AiDisclaimer,
   EmptyState,
+  ErrorState,
   FieldLabel,
   LoadingState,
   PageHeader,
@@ -16,9 +19,11 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/workflow/primitives";
-import { sampleSchedule, tasks as seedTasks } from "@/lib/mock-data";
+import { planDay as planDayFn } from "@/lib/ai.functions";
+import { meetings, tasks as seedTasks } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import type { ScheduleBlock, Task, TaskPriority, TaskStatus } from "@/types/workflow";
+
 
 const title = "Task Planner — WorkFlow AI";
 const description =
