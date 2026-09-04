@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import {
   ActionButton,
   AiDisclaimer,
   EmptyState,
+  ErrorState,
   FieldLabel,
   LoadingState,
   PageHeader,
@@ -17,8 +19,9 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/workflow/primitives";
-import { sampleEmailDraft } from "@/lib/mock-data";
+import { generateEmail } from "@/lib/ai.functions";
 import type { EmailTone } from "@/types/workflow";
+
 
 const title = "Email Assistant — WorkFlow AI";
 const description =
