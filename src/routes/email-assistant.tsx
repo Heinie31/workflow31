@@ -54,16 +54,27 @@ function EmailAssistant() {
   const [tone, setTone] = useState<EmailTone>("professional");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const generateFn = useServerFn(generateEmail);
 
-  // Placeholder generation. Replaced by a server function + AI call in stage two.
-  function generate() {
+  async function generate() {
+    if (!purpose.trim() && !keyPoints.trim()) {
+      toast.error("Add a purpose or some key information first");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      setOutput(`${sampleEmailDraft.subject}\n\n${sampleEmailDraft.body}`);
-      setLoading(false);
+    setError(null);
+    try {
+      const result = await generateFn({ data: { recipient, purpose, keyPoints, tone } });
+      setOutput(result.output);
       toast.success("Draft ready", { description: "Review before sending." });
-    }, 700);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   }
+
 
   async function copy() {
     await navigator.clipboard.writeText(output);
