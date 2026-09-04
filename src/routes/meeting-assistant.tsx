@@ -95,9 +95,14 @@ function MeetingAssistant() {
                   className="min-h-72"
                 />
               </div>
-              <ActionButton variant="primary" className="w-full justify-center" onClick={summarise}>
+              <ActionButton
+                variant="primary"
+                className="w-full justify-center"
+                onClick={summarise}
+                disabled={loading}
+              >
                 <Sparkles className="size-4" strokeWidth={1.75} aria-hidden />
-                Summarise Meeting
+                {loading ? "Summarising…" : "Summarise Meeting"}
               </ActionButton>
               <p className="text-[11px] text-inkfaint">
                 Don't paste confidential or sensitive information unless this AI service has been
@@ -111,7 +116,12 @@ function MeetingAssistant() {
               <Panel label="AI output">
                 <LoadingState label="Reading the notes…" />
               </Panel>
+            ) : error ? (
+              <Panel label="AI output">
+                <ErrorState message={error} onRetry={summarise} />
+              </Panel>
             ) : summary ? (
+
               <>
                 <AiOutputCard label={`AI output · ${summary.meetingTitle}`} timestamp="just now">
                   <p className="text-pretty text-sm text-inkmuted">{summary.summary}</p>
