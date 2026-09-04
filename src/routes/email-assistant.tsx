@@ -135,9 +135,14 @@ function EmailAssistant() {
                   ))}
                 </SelectField>
               </div>
-              <ActionButton variant="primary" className="w-full justify-center" onClick={generate}>
+              <ActionButton
+                variant="primary"
+                className="w-full justify-center"
+                onClick={generate}
+                disabled={loading}
+              >
                 <Sparkles className="size-4" strokeWidth={1.75} aria-hidden />
-                Generate Email
+                {loading ? "Generating…" : "Generate Email"}
               </ActionButton>
               <p className="text-[11px] text-inkfaint">
                 Don't enter confidential or sensitive information unless this AI service has been
@@ -151,7 +156,12 @@ function EmailAssistant() {
               <Panel label="AI output">
                 <LoadingState label="Drafting your email…" />
               </Panel>
+            ) : error ? (
+              <Panel label="AI output">
+                <ErrorState message={error} onRetry={generate} />
+              </Panel>
             ) : output ? (
+
               <AiOutputCard
                 label="AI output · Draft email"
                 timestamp="just now"
