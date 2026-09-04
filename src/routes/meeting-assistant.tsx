@@ -43,15 +43,25 @@ function MeetingAssistant() {
   const [notes, setNotes] = useState("");
   const [summary, setSummary] = useState<MeetingSummary | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const summariseFn = useServerFn(summariseMeeting);
 
-  // Placeholder summarisation. Replaced by a server function + AI call in stage two.
-  function summarise() {
+  async function summarise() {
+    if (notes.trim().length < 20) {
+      toast.error("Paste some meeting notes first");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      setSummary({ ...sampleMeetingSummary, meetingTitle: meetingTitle || sampleMeetingSummary.meetingTitle });
+    setError(null);
+    try {
+      setSummary(await summariseFn({ data: { meetingTitle, notes } }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   }
+
 
   return (
     <AppShell>
