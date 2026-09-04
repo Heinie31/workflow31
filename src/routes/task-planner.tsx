@@ -1,6 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Plus, Sparkles } from "lucide-react";
+import { toast } from "sonner";
 
 import { AppShell } from "@/components/layout/AppShell";
 import { TaskCard } from "@/components/workflow/TaskCard";
@@ -8,6 +10,7 @@ import {
   ActionButton,
   AiDisclaimer,
   EmptyState,
+  ErrorState,
   FieldLabel,
   LoadingState,
   PageHeader,
@@ -16,9 +19,11 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/workflow/primitives";
-import { sampleSchedule, tasks as seedTasks } from "@/lib/mock-data";
+import { planDay as planDayFn } from "@/lib/ai.functions";
+import { meetings, tasks as seedTasks } from "@/lib/mock-data";
 import { cn } from "@/lib/utils";
 import type { ScheduleBlock, Task, TaskPriority, TaskStatus } from "@/types/workflow";
+
 
 const title = "Task Planner — WorkFlow AI";
 const description =
@@ -48,6 +53,8 @@ function TaskPlanner() {
   const [showForm, setShowForm] = useState(false);
   const [schedule, setSchedule] = useState<ScheduleBlock[] | null>(null);
   const [planning, setPlanning] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const runPlan = useServerFn(planDayFn);
 
   const [draft, setDraft] = useState({
     title: "",
@@ -83,13 +90,37 @@ function TaskPlanner() {
     setShowForm(false);
   }
 
-  // Placeholder planner. Replaced by a server function + AI call in stage two.
-  function planDay() {
+  async function planDay() {
+    if (tasks.length === 0) {
+      toast.error("Add a task before planning your day");
+      return;
+    }
     setPlanning(true);
-    setTimeout(() => {
-      setSchedule(sampleSchedule);
+    setError(null);
+    try {
+      const blocks = await runPlan({
+        data: {
+          tasks: tasks.map((task) => ({
+            title: task.title,
+            priority: task.priority,
+            status: task.status,
+            deadline: task.deadline,
+            estimatedMinutes: task.estimatedMinutes,
+          })),
+          meetings: meetings.map((meeting) => ({
+            title: meeting.title,
+            startsAt: meeting.startsAt,
+            endsAt: meeting.endsAt,
+          })),
+        },
+      });
+      setSchedule(blocks);
+      toast.success("Your day is planned", { description: `${blocks.length} blocks scheduled.` });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
       setPlanning(false);
-    }, 800);
+    }
   }
 
   return (
@@ -100,12 +131,13 @@ function TaskPlanner() {
           title="Your tasks and daily plan"
           description="Capture the work, then let AI order it around your meetings."
           action={
-            <ActionButton variant="primary" onClick={planDay}>
+            <ActionButton variant="primary" onClick={planDay} disabled={planning}>
               <Sparkles className="size-4" strokeWidth={1.75} aria-hidden />
-              Plan My Day
+              {planning ? "Planning…" : "Plan My Day"}
             </ActionButton>
           }
         />
+
 
         <div className="grid gap-4 lg:grid-cols-5">
           <div className="space-y-4 lg:col-span-3">
@@ -220,7 +252,10 @@ function TaskPlanner() {
             <Panel label="AI daily schedule" glass>
               {planning ? (
                 <LoadingState label="Sequencing your day…" />
+              ) : error ? (
+                <ErrorState message={error} onRetry={planDay} />
               ) : schedule ? (
+
                 <div className="space-y-2.5">
                   {schedule.map((block) => (
                     <div

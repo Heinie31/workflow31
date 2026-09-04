@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { ListPlus, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import {
   ActionButton,
   AiDisclaimer,
   EmptyState,
+  ErrorState,
   FieldLabel,
   LoadingState,
   PageHeader,
@@ -16,8 +18,9 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/workflow/primitives";
-import { sampleMeetingSummary } from "@/lib/mock-data";
+import { summariseMeeting } from "@/lib/ai.functions";
 import type { MeetingSummary } from "@/types/workflow";
+
 
 const title = "Meeting Assistant — WorkFlow AI";
 const description =
@@ -40,15 +43,25 @@ function MeetingAssistant() {
   const [notes, setNotes] = useState("");
   const [summary, setSummary] = useState<MeetingSummary | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const summariseFn = useServerFn(summariseMeeting);
 
-  // Placeholder summarisation. Replaced by a server function + AI call in stage two.
-  function summarise() {
+  async function summarise() {
+    if (notes.trim().length < 20) {
+      toast.error("Paste some meeting notes first");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      setSummary({ ...sampleMeetingSummary, meetingTitle: meetingTitle || sampleMeetingSummary.meetingTitle });
+    setError(null);
+    try {
+      setSummary(await summariseFn({ data: { meetingTitle, notes } }));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   }
+
 
   return (
     <AppShell>
@@ -82,9 +95,14 @@ function MeetingAssistant() {
                   className="min-h-72"
                 />
               </div>
-              <ActionButton variant="primary" className="w-full justify-center" onClick={summarise}>
+              <ActionButton
+                variant="primary"
+                className="w-full justify-center"
+                onClick={summarise}
+                disabled={loading}
+              >
                 <Sparkles className="size-4" strokeWidth={1.75} aria-hidden />
-                Summarise Meeting
+                {loading ? "Summarising…" : "Summarise Meeting"}
               </ActionButton>
               <p className="text-[11px] text-inkfaint">
                 Don't paste confidential or sensitive information unless this AI service has been
@@ -98,7 +116,12 @@ function MeetingAssistant() {
               <Panel label="AI output">
                 <LoadingState label="Reading the notes…" />
               </Panel>
+            ) : error ? (
+              <Panel label="AI output">
+                <ErrorState message={error} onRetry={summarise} />
+              </Panel>
             ) : summary ? (
+
               <>
                 <AiOutputCard label={`AI output · ${summary.meetingTitle}`} timestamp="just now">
                   <p className="text-pretty text-sm text-inkmuted">{summary.summary}</p>

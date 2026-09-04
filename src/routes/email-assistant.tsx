@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState } from "react";
 import { Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -9,6 +10,7 @@ import {
   ActionButton,
   AiDisclaimer,
   EmptyState,
+  ErrorState,
   FieldLabel,
   LoadingState,
   PageHeader,
@@ -17,8 +19,9 @@ import {
   TextAreaField,
   TextField,
 } from "@/components/workflow/primitives";
-import { sampleEmailDraft } from "@/lib/mock-data";
+import { generateEmail } from "@/lib/ai.functions";
 import type { EmailTone } from "@/types/workflow";
+
 
 const title = "Email Assistant — WorkFlow AI";
 const description =
@@ -51,16 +54,27 @@ function EmailAssistant() {
   const [tone, setTone] = useState<EmailTone>("professional");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const generateFn = useServerFn(generateEmail);
 
-  // Placeholder generation. Replaced by a server function + AI call in stage two.
-  function generate() {
+  async function generate() {
+    if (!purpose.trim() && !keyPoints.trim()) {
+      toast.error("Add a purpose or some key information first");
+      return;
+    }
     setLoading(true);
-    setTimeout(() => {
-      setOutput(`${sampleEmailDraft.subject}\n\n${sampleEmailDraft.body}`);
-      setLoading(false);
+    setError(null);
+    try {
+      const result = await generateFn({ data: { recipient, purpose, keyPoints, tone } });
+      setOutput(result.output);
       toast.success("Draft ready", { description: "Review before sending." });
-    }, 700);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   }
+
 
   async function copy() {
     await navigator.clipboard.writeText(output);
@@ -121,9 +135,14 @@ function EmailAssistant() {
                   ))}
                 </SelectField>
               </div>
-              <ActionButton variant="primary" className="w-full justify-center" onClick={generate}>
+              <ActionButton
+                variant="primary"
+                className="w-full justify-center"
+                onClick={generate}
+                disabled={loading}
+              >
                 <Sparkles className="size-4" strokeWidth={1.75} aria-hidden />
-                Generate Email
+                {loading ? "Generating…" : "Generate Email"}
               </ActionButton>
               <p className="text-[11px] text-inkfaint">
                 Don't enter confidential or sensitive information unless this AI service has been
@@ -137,7 +156,12 @@ function EmailAssistant() {
               <Panel label="AI output">
                 <LoadingState label="Drafting your email…" />
               </Panel>
+            ) : error ? (
+              <Panel label="AI output">
+                <ErrorState message={error} onRetry={generate} />
+              </Panel>
             ) : output ? (
+
               <AiOutputCard
                 label="AI output · Draft email"
                 timestamp="just now"
