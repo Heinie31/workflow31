@@ -252,7 +252,10 @@ function TaskPlanner() {
             <Panel label="AI daily schedule" glass>
               {planning ? (
                 <LoadingState label="Sequencing your day…" />
+              ) : error ? (
+                <ErrorState message={error} onRetry={planDay} />
               ) : schedule ? (
+
                 <div className="space-y-2.5">
                   {schedule.map((block) => (
                     <div
